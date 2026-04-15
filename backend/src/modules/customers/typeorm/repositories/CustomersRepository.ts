@@ -19,4 +19,19 @@ export class CustomersRepository extends Repository<Customer> {
     });
     return customer;
   }
+
+  public async findOrCreateByEmail(userData: { name: string, email: string }): Promise<Customer> {
+    let customer = await this.findByEmail(userData.email);
+
+    if (!customer) {
+      customer = this.create({
+        name: userData.name,
+        email: userData.email,
+      });
+
+      await this.save(customer);
+    }
+
+    return customer;
+  }
 }

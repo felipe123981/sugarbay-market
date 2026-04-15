@@ -33,9 +33,13 @@ const SellerSettingsTab = () => {
     const fetchCustomer = async () => {
       setIsFetching(true);
       try {
+        // Primeiro, tentamos obter os dados do usuário autenticado
+        const profileUser = await getProfile();
+
+        // Em seguida, buscamos o customer específico para este usuário
         const response = await listCustomers();
         const customerList = response?.data || response || [];
-        const found = customerList.find(c => c.email === user.email);
+        const found = customerList.find(c => c.email === profileUser.email);
 
         if (found) {
           setLocalCustomer(found);
@@ -46,9 +50,11 @@ const SellerSettingsTab = () => {
           });
           updateCustomerCtx(found);
         } else {
+          // Se não encontrar um customer com o email do usuário, tentamos criar
+          // mas primeiro verificamos se já existe um customer com esse email de outra forma
           const newCustomer = await createCustomer({
-            name: user.name,
-            email: user.email,
+            name: profileUser.name,
+            email: profileUser.email,
             shop_name: '',
             location: '',
             bio: '',

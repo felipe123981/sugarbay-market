@@ -6,7 +6,7 @@ import { OrdersRepository } from '../typeorm/repositories/OrdersRepository';
 interface IRequest {
   id: string;
 }
-class CreateOrderService {
+class ShowOrderService {
   public async execute({ id }: IRequest): Promise<Order> {
     const ordersRepository = getCustomRepository(OrdersRepository);
 
@@ -20,4 +20,4 @@ class CreateOrderService {
   }
 }
 
-export default CreateOrderService;
+export default ShowOrderService;
