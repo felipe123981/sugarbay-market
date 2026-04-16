@@ -113,9 +113,9 @@ frontend/
 
 ### Estrutura de Dados e Relacionamentos
 - **Usuário (User)** ↔ **Cliente (Customer)**: Relacionamento implícito por email (ambos compartilham o mesmo email para vinculação)
-- **Pedido (Order)** ← **Usuário (User)**: Ordem atualmente associada ao usuário autenticado
+- **Pedido (Order)** ↔ **Comprador/Vendedor**: Ordem associada a um comprador (buyer_id) e múltiplos vendedores (seller_ids)
 - **Produto (Product)** ← **Cliente (Customer)**: Proprietário/vendedor do produto
-- **Pedido (Order)** ↔ **Produto (Product)**: Via tabela intermediária `orders_products` (many-to-many com preço e quantidade)
+- **Pedido (Order)** ↔ **Produto (Product)**: Via tabela intermediária `orders_products` (many-to-many com price, quantity e final_price)
 
 ### Padrão de Repositories TypeORM
 - Cada módulo tem um `NomeEntidadeRepository` que estende `Repository<Entidade>`
@@ -283,16 +283,14 @@ frontend/
 - Validações para evitar duplicação de nomes de produtos
 
 ### Orders
-- Criação de pedidos com múltiplos produtos
-- Relacionamento com User autenticado (quem compra) via `user_id` atualmente
-- Relação com produtos via tabela intermediária OrdersProducts (product_id, quantity, price)
-- Atualmente, Order se relaciona com User, mas para o requisito solicitado, deve relacionar com Customer (comprador) e também com Customer (vendedor)
-- Implementação atual permite produtos de múltiplos vendedores no mesmo pedido
-- Serviço de criação (`CreateOrderService`) faz validações de estoque e atualiza quantidades após a criação
-- Tabela de relacionamento `orders_products` armazena preço no momento da compra e quantidade
-- O controlador `OrdersController` extrai o `user_id` do token JWT e o associa ao pedido
-- O repositório `OrdersRepository` gerencia a persistência dos pedidos com seus produtos
-- Serviços para busca e exibição de pedidos individuais
+- Criação de pedidos com múltiplos produtos de múltiplos vendedores
+- Relacionamento com Customer (comprador) via `buyer_id` e Customers (vendedores) via `seller_ids`
+- Relação com produtos via tabela intermediária OrdersProducts (product_id, quantity, price, final_price)
+- Implementação de markup dinâmico (PlatformSettings) por vendedor
+- `CreateOrderService` calcula o preço final baseado em: (custo + embalagem + frete) / (1 - (taxas + lucro))
+- Tabela de relacionamento `orders_products` armazena o `final_price` calculado com o markup
+- O controlador `OrdersController` extrai o `user_id` do token JWT e busca o Customer correspondente
+- O repositório `OrdersRepository` gerencia a persistência dos pedidos com buyer_id, seller_ids e total
 
 ### Reviews
 - Avaliações de produtos/clientes

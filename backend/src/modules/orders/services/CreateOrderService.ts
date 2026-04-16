@@ -1,5 +1,6 @@
 import { CustomersRepository } from '@modules/customers/typeorm/repositories/CustomersRepository';
 import { ProductsRepository } from '@modules/products/typeorm/repositores/ProductsRepository';
+import { PlatformSettingsRepository } from '@modules/platform/typeorm/repositories/PlatformSettingsRepository';
 import AppError from '@shared/errors/AppError';
 import { getCustomRepository } from 'typeorm';
 import Order from '../typeorm/entities/Order';
@@ -14,11 +15,13 @@ interface IRequest {
   customer_id: string;
   products: IProduct[];
 }
+
 class CreateOrderService {
   public async execute({ customer_id, products }: IRequest): Promise<Order> {
     const ordersRepository = getCustomRepository(OrdersRepository);
     const customersRepository = getCustomRepository(CustomersRepository);
     const productsRepository = getCustomRepository(ProductsRepository);
+    const platformSettingsRepository = getCustomRepository(PlatformSettingsRepository);
 
     const customerExists = await customersRepository.findById(customer_id);
 
@@ -44,27 +47,89 @@ class CreateOrderService {
       );
     }
 
-    const quantityAvaliable = products.filter(
+    const quantityAvailable = products.filter(
       product =>
         existsProducts.filter(p => p.id === product.id)[0].quantity <
         product.quantity,
     );
 
-    if (quantityAvaliable.length) {
+    if (quantityAvailable.length) {
       throw new AppError(
-        `The quantity ${quantityAvaliable[0].quantity} is not avaliable for ${quantityAvaliable[0].id}.`,
+        `The quantity ${quantityAvailable[0].quantity} is not avaliable for ${quantityAvailable[0].id}.`,
       );
     }
 
-    const serializedProducts = products.map(product => ({
-      product_id: product.id,
-      quantity: product.quantity,
-      price: existsProducts.filter(p => p.id === product.id)[0].price,
-    }));
+    // Load platform settings for markup calculation
+    let settings = await platformSettingsRepository.findSettings();
+    if (!settings) {
+      settings = platformSettingsRepository.create({
+        tax_rate: 0.1,
+        profit_margin: 0.2,
+        packaging_cost: 2.5,
+        shipping_cost: 8.5,
+      });
+    }
+
+    const taxRate = Number(settings.tax_rate);
+    const profitMargin = Number(settings.profit_margin);
+    const packagingCost = Number(settings.packaging_cost);
+    const shippingCost = Number(settings.shipping_cost);
+
+    // Group products by seller_id
+    const productsBySeller: Record<string, any[]> = {};
+    existsProducts.forEach(product => {
+      const sellerId = product.customer_id as unknown as string;
+      if (!productsBySeller[sellerId]) {
+        productsBySeller[sellerId] = [];
+      }
+      const quantity = products.find(p => p.id === product.id)!.quantity;
+      productsBySeller[sellerId].push({
+        ...product,
+        quantity,
+      });
+    });
+
+    const sellerIds = Object.keys(productsBySeller);
+    let orderTotal = 0;
+    const serializedProducts: any[] = [];
+
+    const divisor = 1 - (taxRate + profitMargin);
+    if (divisor <= 0) {
+      throw new AppError('Invalid platform settings: tax and profit margin exceed 100%.');
+    }
+
+    // Calculate markup per seller
+    for (const sellerId of sellerIds) {
+      const sellerItems = productsBySeller[sellerId];
+      const sumProductPrices = sellerItems.reduce((acc, item) => acc + (Number(item.price) * item.quantity), 0);
+      
+      // FORMULA: (sumProductCosts + packaging + shipping) / (1 - (tax + profit))
+      const totalCost = sumProductPrices + packagingCost + shippingCost;
+      const sellerFinalPrice = totalCost / divisor;
+      
+      orderTotal += sellerFinalPrice;
+
+      // Distribute final price to each product for this seller
+      for (const item of sellerItems) {
+        const itemProportion = (Number(item.price) * item.quantity) / sumProductPrices;
+        const itemFinalPrice = itemProportion * sellerFinalPrice;
+        
+        serializedProducts.push({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          final_price: itemFinalPrice,
+          seller_id: sellerId,
+          buyer_id: customer_id,
+        });
+      }
+    }
 
     const order = await ordersRepository.createOrder({
       customer: customerExists,
+      seller_ids: sellerIds,
       products: serializedProducts,
+      total: orderTotal,
     });
 
     const { order_products } = order;

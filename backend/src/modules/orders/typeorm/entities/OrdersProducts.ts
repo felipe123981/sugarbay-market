@@ -35,6 +35,15 @@ class OrdersProducts {
   @Column('int')
   quantity: number;
 
+  @Column('decimal', { precision: 10, scale: 2, name: 'final_price', nullable: true })
+  final_price: number;
+
+  @Column('uuid')
+  seller_id: string;
+
+  @Column('uuid')
+  buyer_id: string;
+
   @CreateDateColumn()
   created_at: Date;
 

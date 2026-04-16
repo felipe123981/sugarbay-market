@@ -296,3 +296,23 @@ export async function createOrder(payload) {
 export async function getOrder(id) {
   return request(`/orders/${id}`);
 }
+
+// ─── Platform Settings ───────────────────────────────────────────────────────
+
+/**
+ * GET /platform/settings — Get global platform settings.
+ */
+export async function getPlatformSettings() {
+  return request('/platform/settings');
+}
+
+/**
+ * PUT /platform/settings — Update global platform settings.
+ * @param {{ tax_rate: number, profit_margin: number, packaging_cost: number, shipping_cost: number }} payload
+ */
+export async function updatePlatformSettings(payload) {
+  return request('/platform/settings', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}

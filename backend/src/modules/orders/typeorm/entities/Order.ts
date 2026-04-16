@@ -1,4 +1,5 @@
 import {
+  Column,
   CreateDateColumn,
   Entity,
   JoinColumn,
@@ -16,8 +17,17 @@ class Order {
   id: string;
 
   @ManyToOne(() => Customer)
-  @JoinColumn({ name: 'customer_id' })
-  customer: Customer;
+  @JoinColumn({ name: 'buyer_id' })
+  buyer: Customer;
+
+  @Column('uuid', { name: 'buyer_id', nullable: true })
+  buyer_id: string;
+
+  @Column('uuid', { array: true, name: 'seller_ids', nullable: true })
+  seller_ids: string[];
+
+  @Column('decimal', { precision: 10, scale: 2 })
+  total: number;
 
   @OneToMany(() => OrdersProducts, order_products => order_products.order, {
     cascade: true,
