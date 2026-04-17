@@ -24,7 +24,10 @@ class GetCustomerAvatarService {
       return { avatar_url: null };
     }
 
-    const avatarUrl = `${process.env.APP_API_URL}/files/${user.avatar}`;
+    // Use APP_API_URL from environment for constructing the avatar URL
+    // For cloudflared tunnel deployments, ensure APP_API_URL is set to your tunnel URL
+    const baseUrl = process.env.APP_API_URL || 'http://localhost:3333';
+    const avatarUrl = `${baseUrl}/files/${user.avatar}`;
 
     return { avatar_url: avatarUrl };
   }

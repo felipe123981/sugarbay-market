@@ -5,7 +5,9 @@ export function cn(...inputs) {
 	return twMerge(clsx(inputs));
 }
 
-export const IMAGE_BASE_URL = '/api/files';
+export const IMAGE_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/files`
+  : '/api/files';
 
 export function getProductImage(product, fallback = null) {
 	if (product?.photos && product.photos.length > 0) {

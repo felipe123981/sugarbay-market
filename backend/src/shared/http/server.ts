@@ -12,6 +12,9 @@ import uploadConfig from '@config/upload';
 
 const app = express();
 
+// Trust proxy to get correct client IP and host when behind cloudflared/reverse proxy
+app.set('trust proxy', true);
+
 app.use(cors());
 app.use(express.json());
 app.use(pagination);

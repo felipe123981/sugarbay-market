@@ -24,16 +24,19 @@ class UpdateUserAvatarService {
 
     if (user.avatar) {
       const userAvatarFilePath = path.join(uploadConfig.directory, user.avatar);
-      const userAvatarFileExists = await fs.promises.stat(userAvatarFilePath);
-
-      if (
-        userAvatarFileExists &&
-        (getFileExtension(avatarFilename) == 'png' ||
-          getFileExtension(avatarFilename) == 'jpg' ||
-          getFileExtension(avatarFilename) == 'jpeg' ||
-          getFileExtension(avatarFilename) == 'webp')
-      ) {
-        await fs.promises.unlink(userAvatarFilePath);
+      try {
+        await fs.promises.access(userAvatarFilePath, fs.constants.F_OK);
+        // File exists, check extension before deleting
+        if (
+          getFileExtension(avatarFilename) === 'png' ||
+          getFileExtension(avatarFilename) === 'jpg' ||
+          getFileExtension(avatarFilename) === 'jpeg' ||
+          getFileExtension(avatarFilename) === 'webp'
+        ) {
+          await fs.promises.unlink(userAvatarFilePath);
+        }
+      } catch {
+        // File doesn't exist, that's fine - just skip deletion
       }
     }
 

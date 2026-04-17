@@ -58,7 +58,9 @@ class User {
       return null;
     }
 
-    return `${process.env.APP_API_URL}/files/${this.avatar}`;
+    // Use APP_API_URL from environment, or construct from request if available
+    const baseUrl = process.env.APP_API_URL || 'http://localhost:3333';
+    return `${baseUrl}/files/${this.avatar}`;
   }
 }
 

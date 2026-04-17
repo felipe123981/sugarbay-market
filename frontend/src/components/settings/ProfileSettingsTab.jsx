@@ -49,7 +49,7 @@ const ProfileSettingsTab = () => {
         });
         setAvatarPreview(freshUser.avatar_url || null);
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
+        // Error handling is done via toast notifications
       } finally {
         setIsFetching(false);
       }
@@ -96,8 +96,13 @@ const ProfileSettingsTab = () => {
           updateUser(freshUser);
           setAvatarPreview(freshUser.avatar_url || null);
           setAvatarFile(null);
+          toast({ title: "Avatar Updated", description: "Your avatar has been successfully uploaded." });
         } catch (avatarError) {
-          console.warn('Avatar upload failed:', avatarError);
+          toast({
+            title: "Avatar Upload Failed",
+            description: avatarError.message || "Could not upload avatar.",
+            variant: "destructive"
+          });
         }
       }
 

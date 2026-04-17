@@ -2,9 +2,12 @@
  * Centralized API client for Sugarbay backend.
  * All requests go through /api proxy (configured in vite.config.js)
  * which forwards to http://localhost:3333.
+ *
+ * For production/tunnel deployment, set VITE_API_BASE_URL to your backend URL
+ * (e.g., https://your-tunnel.trycloudflare.com)
  */
 
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 /**
  * Core fetch wrapper that attaches JWT token and handles error responses.
@@ -14,10 +17,12 @@ async function request(path, options = {}) {
 
   const isFormData = options.body instanceof FormData;
   const headers = {
+    // Don't set Content-Type for FormData - browser will set it automatically with boundary
     ...(!isFormData && { 'Content-Type': 'application/json' }),
     ...((token && token !== 'null') ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
+
 
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,

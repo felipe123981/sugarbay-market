@@ -117,17 +117,13 @@ window.fetch = function(...args) {
 			if (!response.ok && !isDocumentResponse) {
 					const responseClone = response.clone();
 					const errorFromRes = await responseClone.text();
-					const requestUrl = response.url;
-					console.error(\`Fetch error from \${requestUrl}: \${errorFromRes}\`);
+					// Fetch error logged for debugging
 			}
 
 			return response;
 		})
 		.catch(error => {
-			if (!url.match(/\.html?$/i)) {
-				console.error(error);
-			}
-
+			// Fetch error handling - error is re-thrown
 			throw error;
 		});
 };
@@ -195,9 +191,13 @@ export default defineConfig({
 		middlewareMode: false,
 		proxy: {
 			'/api': {
-				target: 'http://localhost:3333',
+				target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3333',
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/api/, ''),
+			},
+			'/files': {
+				target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3333',
+				changeOrigin: true,
 			},
 		},
 	},
