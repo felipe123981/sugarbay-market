@@ -66,13 +66,21 @@ const CheckoutPage = () => {
         }
 
         setIsLoading(true);
-        
+
         // Prepare order data
         const orderData = {
           products: cartItems.map(item => ({
             id: item.id,
             quantity: item.quantity
-          }))
+          })),
+          shipping_address: {
+            name: shippingInfo.name,
+            address: shippingInfo.address,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zip: shippingInfo.zip,
+            country: shippingInfo.country,
+          }
         };
 
         toast({ title: "Processing Order...", description: "Please wait while we process your order." });

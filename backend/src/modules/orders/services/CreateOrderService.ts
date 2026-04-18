@@ -1,6 +1,7 @@
 import { CustomersRepository } from '@modules/customers/typeorm/repositories/CustomersRepository';
 import { ProductsRepository } from '@modules/products/typeorm/repositores/ProductsRepository';
 import { PlatformSettingsRepository } from '@modules/platform/typeorm/repositories/PlatformSettingsRepository';
+import { OrderAddressRepository } from '../typeorm/repositories/OrderAddressRepository';
 import AppError from '@shared/errors/AppError';
 import { getCustomRepository } from 'typeorm';
 import Order from '../typeorm/entities/Order';
@@ -11,17 +12,28 @@ interface IProduct {
   quantity: number;
 }
 
+interface IShippingAddress {
+  name: string;
+  address: string;
+  city: string;
+  state?: string;
+  zip: string;
+  country: string;
+}
+
 interface IRequest {
   customer_id: string;
   products: IProduct[];
+  shipping_address: IShippingAddress;
 }
 
 class CreateOrderService {
-  public async execute({ customer_id, products }: IRequest): Promise<Order> {
+  public async execute({ customer_id, products, shipping_address }: IRequest): Promise<Order> {
     const ordersRepository = getCustomRepository(OrdersRepository);
     const customersRepository = getCustomRepository(CustomersRepository);
     const productsRepository = getCustomRepository(ProductsRepository);
     const platformSettingsRepository = getCustomRepository(PlatformSettingsRepository);
+    const orderAddressRepository = getCustomRepository(OrderAddressRepository);
 
     const customerExists = await customersRepository.findById(customer_id);
 
@@ -58,6 +70,16 @@ class CreateOrderService {
         `The quantity ${quantityAvailable[0].quantity} is not avaliable for ${quantityAvailable[0].id}.`,
       );
     }
+
+    // Create shipping address
+    const orderAddress = await orderAddressRepository.createAddress({
+      name: shipping_address.name,
+      address: shipping_address.address,
+      city: shipping_address.city,
+      state: shipping_address.state,
+      zip: shipping_address.zip,
+      country: shipping_address.country,
+    });
 
     // Load platform settings for markup calculation
     let settings = await platformSettingsRepository.findSettings();
@@ -130,6 +152,7 @@ class CreateOrderService {
       seller_ids: sellerIds,
       products: serializedProducts,
       total: orderTotal,
+      shipping_address_id: orderAddress.id,
     });
 
     const { order_products } = order;

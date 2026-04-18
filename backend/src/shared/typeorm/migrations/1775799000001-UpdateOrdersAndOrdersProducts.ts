@@ -6,8 +6,7 @@ import {
 } from 'typeorm';
 
 export class UpdateOrdersAndOrdersProducts1775799000001
-  implements MigrationInterface
-{
+  implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 1. Update orders table
     // Check if customer_id exists before dropping (for idempotency)
@@ -21,20 +20,20 @@ export class UpdateOrdersAndOrdersProducts1775799000001
       new TableColumn({
         name: 'buyer_id',
         type: 'uuid',
-        isNullable: true,
+        isNullable: false,
       }),
       new TableColumn({
         name: 'seller_ids',
         type: 'uuid',
         isArray: true,
-        isNullable: true,
+        isNullable: false,
       }),
       new TableColumn({
         name: 'total',
         type: 'decimal',
         precision: 10,
         scale: 2,
-        isNullable: true,
+        isNullable: false,
       }),
     ]);
 
@@ -56,17 +55,17 @@ export class UpdateOrdersAndOrdersProducts1775799000001
         type: 'decimal',
         precision: 10,
         scale: 2,
-        isNullable: true,
+        isNullable: false,
       }),
       new TableColumn({
         name: 'seller_id',
         type: 'uuid',
-        isNullable: true,
+        isNullable: false,
       }),
       new TableColumn({
         name: 'buyer_id',
         type: 'uuid',
-        isNullable: true,
+        isNullable: false,
       }),
     ]);
 
@@ -110,7 +109,7 @@ export class UpdateOrdersAndOrdersProducts1775799000001
       new TableColumn({
         name: 'customer_id',
         type: 'uuid',
-        isNullable: true,
+        isNullable: false,
       }),
     );
 

@@ -1,20 +1,20 @@
 # Stage 1: Build the React application
-FROM node:18-alpine AS build
+FROM oven/bun:1-alpine AS build
 
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and yarn.lock
-COPY package.json yarn.lock ./
+# Copy package.json and bun.lock
+COPY package.json bun.lock ./
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 # Copy the rest of the application source code
 COPY . .
 
 # Build the application
-RUN yarn build
+RUN bun run build
 
 # Stage 2: Serve the application with Nginx
 FROM nginx:alpine

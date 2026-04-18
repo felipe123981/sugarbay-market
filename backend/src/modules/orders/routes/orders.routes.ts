@@ -30,6 +30,14 @@ ordersRouter.post(
           }),
         )
         .required(),
+      shipping_address: Joi.object({
+        name: Joi.string().required(),
+        address: Joi.string().required(),
+        city: Joi.string().required(),
+        state: Joi.string().allow(null, ''),
+        zip: Joi.string().required(),
+        country: Joi.string().required(),
+      }).required(),
     },
   }),
   ordersController.create,

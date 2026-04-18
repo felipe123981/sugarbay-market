@@ -19,23 +19,25 @@ interface IRequest {
   seller_ids: string[];
   products: IProduct[];
   total: number;
+  shipping_address_id: string;
 }
 
 @EntityRepository(Order)
 export class OrdersRepository extends Repository<Order> {
   public async findById(id: string): Promise<Order | undefined> {
     const order = await this.findOne(id, {
-      relations: ['order_products', 'buyer'],
+      relations: ['order_products', 'buyer', 'shipping_address'],
     });
     return order;
   }
 
-  public async createOrder({ customer, seller_ids, products, total }: IRequest): Promise<Order> {
+  public async createOrder({ customer, seller_ids, products, total, shipping_address_id }: IRequest): Promise<Order> {
     const order = this.create({
       buyer: customer,
       seller_ids,
       order_products: products,
       total,
+      shipping_address_id,
     });
 
     await this.save(order);
