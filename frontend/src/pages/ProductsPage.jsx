@@ -5,7 +5,7 @@
     import ProductGrid from '@/components/products/ProductGrid';
     import { useProductFilters } from '@/hooks/useProductFilters';
     import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
-    import { categories, maxPrice } from '@/lib/productData';
+    import { categories } from '@/lib/productData';
     import { listProducts, listCustomers } from '@/lib/api';
 
     const ProductsPage = () => {
@@ -42,6 +42,11 @@
         fetchProducts();
       }, []);
 
+      // Calculate maxPrice dynamically from actual products
+      const dynamicMaxPrice = allProductsSource.length > 0
+        ? Math.ceil(Math.max(...allProductsSource.map(p => p.price)))
+        : 1000;
+
       const {
         searchTerm, setSearchTerm,
         selectedCategory, setSelectedCategory,
@@ -49,7 +54,7 @@
         inStockOnly, setInStockOnly,
         sortBy, setSortBy,
         filteredProducts, clearFilters,
-      } = useProductFilters(allProductsSource, maxPrice);
+      } = useProductFilters(allProductsSource, dynamicMaxPrice);
 
       const {
         displayedItems: displayedProducts,
@@ -68,7 +73,7 @@
              <h1 className="text-3xl font-bold text-center mb-6">Explore Products</h1>
              <ProductFilters
                 categories={categories}
-                maxPrice={maxPrice}
+                maxPrice={dynamicMaxPrice}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 selectedCategory={selectedCategory}
