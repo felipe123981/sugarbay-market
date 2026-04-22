@@ -1,200 +1,136 @@
-### Necessidade
-Implementar duas colunas obrigatórias (NOT NULL) na tabela `orders`:
-- `buyer_id`: Chave estrangeira para o **customer** comprador (através da relação user->customer via email lookup)
-- `seller_id`: Chave estrangeira para o **customer** vendedor (proprietário do produto)
+# Plano de Implementação: ListOrderService e Rotas de Orders
 
-### Impacto no Sistema
-- Melhoria na rastreabilidade de pedidos entre compradores e vendedores específicos
-- Maior clareza nos relatórios de vendas por vendedor
-- Melhor experiência para sellers ao visualizar apenas seus pedidos
-- Facilita a implementação de funcionalidades de mensagens entre buyer e seller
-- Permite uma arquitetura mais escalável para funcionalidades futuras (comissões, pagamentos por vendedor, etc.)
-- Melhora a capacidade de gerar relatórios financeiros por vendedor
+## Contexto
 
-### Estratégia Recomendada para Pedidos Multi-Vendedor
+Implementar funcionalidade de listagem de orders no backend. O usuário autenticado deve poder visualizar suas próprias orders através de `GET /profile/orders`, e deve existir uma rota administrativa (comentada) para listar todas as orders da plataforma.
 
-Para esta implementação, recomenda-se a **Opção C: Atribuição Baseada no Vendedor Principal**, que é a mais viável dada a arquitetura atual:
+## Requisitos
 
-1. A arquitetura atual permite que pedidos tenham produtos de múltiplos vendedores
-2. Modificar drasticamente essa funcionalidade afetaria negativamente a experiência do usuário
-3. A melhor abordagem é identificar o vendedor predominante no pedido (por quantidade de itens ou primeiro produto) como `seller_id`
-4. O `buyer_id` será sempre o customer associado ao usuário autenticado
-5. Esta abordagem mantém a funcionalidade existente sem grandes alterações de arquitetura
-6. Em casos de empate de quantidade de produtos por vendedor, pode-se usar critérios como ordem de inclusão no carrinho
+### Backend
 
-### Detalhes da Implementação
+1. **ListOrderService** - Serviço que lista orders de um customer
+2. **Rota `/profile/orders`** - Lista orders do usuário logado (via customer_id)
+3. **Rota `/admin` (comentada)** - Lista TODAS as orders da plataforma
 
-#### Fase 1: Atualização da Entidade Order
-Modificar a entidade `Order` para substituir o relacionamento com `User` por relacionamentos com `Customer` para comprador e vendedor.
+### Frontend
 
-#### Fase 2: Criação da Migração
-Criar uma migração para:
-- Adicionar `buyer_id` (relacionado ao customer do usuário autenticado)
-- Adicionar `seller_id` (relacionado ao customer proprietário do produto predominante)
-- Manter compatibilidade com dados existentes
-- Executar script de conversão para dados existentes
-- Manter integridade referencial com as tabelas customers e products
+1. **Dashboard Orders** - `http://localhost/dashboard?tab=orders` exibe orders do usuário
+2. **Order Details** - `http://localhost/dashboard/order/:id` exibe detalhes de uma order específica
 
-#### Fase 3: Atualização da Lógica de Negócio
-Modificar o `CreateOrderService` para:
-1. Obter o customer do usuário autenticado (via email lookup)
-2. Determinar o vendedor predominante entre os produtos do pedido
-3. Associar corretamente buyer_id e seller_id ao novo pedido
+---
 
-### Estratégia Escolhida: Vendedor Predominante no Pedido
+## Implementação Backend
 
-A abordagem mais viável considera:
-1. Se todos os produtos forem do mesmo vendedor → usar esse vendedor como `seller_id`
-2. Se houver produtos de múltiplos vendedores → usar o vendedor que detém o maior número de itens no pedido
-3. O `buyer_id` sempre será o `customer` associado ao usuário autenticado (via email lookup)
-4. Para pedidos existentes: usar scripts de migração para atribuir valores com base nos dados históricos
-5. Em caso de empate na quantidade de produtos por vendedor, usar o primeiro vendedor encontrado como critério de desempate
-6. Garantir que a lógica de seleção do vendedor predominante considere também o valor total do pedido por vendedor
+### 1. ListOrderService (`backend/src/modules/orders/services/ListOrderService.ts`)
 
-### Fases de Implementação
+Já existe. Verificar implementação:
 
-#### Fase 1: Migração de Dados
 ```typescript
-// Criar nova migração: AddBuyerIdAndSellerIdToOrders1713033963000.ts
-export class AddBuyerIdAndSellerIdToOrders1713033963000 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    // 1. Adicionar colunas buyer_id e seller_id como nullable temporariamente
-    await queryRunner.addColumn('orders', new TableColumn({
-      name: 'buyer_id',
-      type: 'uuid',
-      isNullable: true,
-    }));
-    
-    await queryRunner.addColumn('orders', new TableColumn({
-      name: 'seller_id',
-      type: 'uuid',
-      isNullable: true,
-    }));
+interface IRequest {
+  customer_id: string;
+}
 
-    // 2. Preencher buyer_id com base no customer_id associado ao user do pedido
-    await queryRunner.query(`
-      UPDATE orders 
-      SET buyer_id = (
-        SELECT c.id 
-        FROM users u
-        JOIN customers c ON u.email = c.email
-        WHERE u.id = orders.user_id
-      )
-      WHERE buyer_id IS NULL
-    `);
-
-    // 3. Preencher seller_id com base no vendedor predominante no pedido
-    await queryRunner.query(`
-      UPDATE orders 
-      SET seller_id = (
-        SELECT p.customer_id 
-        FROM orders_products op
-        JOIN products p ON op.product_id = p.id
-        WHERE op.order_id = orders.id
-        GROUP BY p.customer_id
-        ORDER BY COUNT(*) DESC
-        LIMIT 1
-      )
-      WHERE seller_id IS NULL
-    `);
-
-    // 4. Adicionar chaves estrangeiras
-    await queryRunner.createForeignKey('orders', new TableForeignKey({
-      name: 'OrdersBuyer',
-      columnNames: ['buyer_id'],
-      referencedTableName: 'customers',
-      referencedColumnNames: ['id'],
-      onDelete: 'RESTRICT',
-    }));
-    
-    await queryRunner.createForeignKey('orders', new TableForeignKey({
-      name: 'OrdersSeller',
-      columnNames: ['seller_id'],
-      referencedTableName: 'customers',
-      referencedColumnNames: ['id'],
-      onDelete: 'RESTRICT',
-    }));
-
-    // 5. Tornar colunas NOT NULL definitivamente
-    await queryRunner.query(`
-      ALTER TABLE orders 
-      ALTER COLUMN buyer_id SET NOT NULL,
-      ALTER COLUMN seller_id SET NOT NULL
-    `);
-    
-    // 6. Remover a coluna antiga user_id (opcional, pode ser mantida por compatibilidade)
-    // await queryRunner.dropColumn('orders', 'user_id');
-  }
+public async execute({ customer_id }: IRequest): Promise<Order[]> {
+  const ordersRepository = getCustomRepository(OrdersRepository);
+  const orders = await ordersRepository.findAllByCustomerId(customer_id);
+  return orders;
 }
 ```
 
-#### Fase 2: Atualização de Modelos
+### 2. OrdersController (`backend/src/modules/orders/controllers/OrdersController.ts`)
+
+**Método `index` (já existe)** - Lista orders do usuário autenticado:
+1. Extrai `user_id` de `request.user.id`
+2. Busca `customer` pelo `user_id` (via email relationship)
+3. Chama `ListOrderService.execute({ customer_id })`
+4. Retorna orders
+
+**Método `listAll` (já existe)** - Lista todas as orders (admin):
 ```typescript
-// Atualizar Order.ts
-@Entity('orders')
-class Order {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @ManyToOne(() => Customer)  // Novo relacionamento para o comprador
-  @JoinColumn({ name: 'buyer_id' })
-  buyer: Customer;
-
-  @ManyToOne(() => Customer)  // Novo relacionamento para o vendedor
-  @JoinColumn({ name: 'seller_id' })
-  seller: Customer;
-
-  @OneToMany(() => OrdersProducts, order_products => order_products.order, {
-    cascade: true,
-  })
-  order_products: OrdersProducts[];
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
+public async listAll(request: Request, response: Response): Promise<Response> {
+  const ordersRepository = getCustomRepository(OrdersRepository);
+  const orders = await ordersRepository.find({
+    relations: ['order_products', 'buyer', 'shipping_address'],
+    order: { created_at: 'DESC' },
+  });
+  return response.json(orders);
 }
 ```
 
-- Atualizar os relacionamentos e tipagem na entidade Order
-- Garantir que as importações estejam atualizadas
-- Manter compatibilidade com os repositórios e serviços existentes
-- Manter os métodos de serialização e transformação existentes
-- Incluir os novos campos nas consultas existentes
+### 3. Rotas (`backend/src/modules/orders/routes/orders.routes.ts`)
 
-#### Fase 3: Atualização de Lógica de Negócio
-- Modificar `CreateOrderService` para obter o customer do usuário (via email lookup) e determinar o vendedor predominante nos produtos do pedido
-- Atualizar `OrdersRepository` para aceitar buyer e seller ao invés de user
-- Atualizar `OrdersController` para mapear corretamente os IDs de comprador e vendedor
-- Implementar validações para garantir integridade dos dados buyer_id e seller_id
-- Garantir consistência na atualização de estoque após as mudanças
-- Atualizar interfaces e tipagem para refletir as novas relações
-- Manter a lógica de cache atualizada após as mudanças
+**Rota `/profile/orders`:**
+```typescript
+ordersRouter.get('/profile/orders', ordersController.index);
+```
 
-#### Fase 4: Adequação do Frontend
-- Atualizar componentes de checkout e acompanhamento de pedidos para refletir as relações com buyer e seller
-- Modificar exibição de pedidos para mostrar informações de comprador e vendedor
-- Atualizar rotas e interfaces para refletir a nova estrutura de dados
-- Garantir consistência na exibição de informações de vendedor nas páginas de produtos e pedidos
-- Atualizar páginas de seller dashboard para filtrar pedidos corretamente por vendedor
-- Implementar interfaces para mensagens entre buyer e seller se necessário
-- Atualizar páginas de administração para visualizar pedidos com os novos campos
-- Atualizar páginas de relatórios para utilizar as novas relações de buyer e seller
+**Rota administrativa comentada:**
+```typescript
+// Rota administrativa — descomentar quando implementar controle de admin
+// ordersRouter.get('/admin', isAuthenticated, ensureAdmin, ordersController.listAll);
+```
 
-#### Fase 5: Validação e Testes
-- Implementar validações para garantir que buyer_id e seller_id sejam sempre definidos corretamente
-- Testar a migração de dados para garantir que pedidos existentes mantenham consistência
-- Verificar a integração completa entre backend e frontend com a nova estrutura
-- Garantir que a experiência do usuário permaneça intacta
-- Realizar testes de ponta a ponta para validar o fluxo completo de pedidos
-- Validar o comportamento do sistema com pedidos contendo produtos de múltiplos vendedores
-- Testar a funcionalidade de checkout com produtos de diferentes vendedores
-- Verificar a integridade referencial após a migração de dados
-- Validar a performance do sistema após as alterações
+> ⚠️ **Atenção:** O `ordersRouter` é montado em `/orders` no `routes/index.ts`.
+> - `ordersRouter.get('/profile/orders')` resulta em `GET /orders/profile/orders`
+> - Para ter `GET /profile/orders`, a rota deve ser adicionada no `profileRouter`
 
-## Conclusão
+### 4. Profile Routes (`backend/src/modules/users/routes/profile.routes.ts`)
 
-Este documento fornece uma visão completa da arquitetura do e-commerce SugarBay Market, incluindo padrões de código, estrutura de pastas, tecnologias utilizadas e especificações para a implementação de buyer_id e seller_id na tabela de pedidos. O padrão de implementação segue uma abordagem orientada a módulos, com separação clara de responsabilidades entre camadas (controller, service, repository, entity).
+Para que a rota seja `GET /profile/orders` (como especificado):
 
-O sistema foi projetado para suportar um marketplace com múltiplos vendedores, e a implementação proposta para buyer_id e seller_id visa melhorar a rastreabilidade e gerenciamento de pedidos entre compradores e vendedores específicos, mantendo a compatibilidade com a funcionalidade existente.
+```typescript
+import { OrdersController } from '@modules/orders/controllers/OrdersController';
+
+const ordersController = new OrdersController();
+
+profileRouter.get('/orders', ordersController.index);
+```
+
+---
+
+## Implementação Frontend
+
+### 1. API Client (`frontend/src/lib/api.js`)
+
+```javascript
+export async function getProfileOrders() {
+  return request('/profile/orders');
+}
+
+export async function getOrderDetail(id) {
+  return request(`/orders/${id}`);
+}
+```
+
+### 2. SellerOrdersTab (`frontend/src/components/seller/SellerOrdersTab.jsx`)
+
+- Substituir `fetchSellerOrders()` por `getProfileOrders()`
+- Manter loading, error, empty states
+
+### 3. SellerOrderDetailPage (`frontend/src/pages/SellerOrderDetailPage.jsx`)
+
+- Substituir `fetchSellerOrderDetails()` por `getOrderDetail(orderId)`
+- Manter loading, not found, error states
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Ação |
+|---------|------|
+| `backend/src/modules/orders/routes/orders.routes.ts` | Adicionar `/profile/orders` e `/admin` comentada |
+| `frontend/src/lib/api.js` | Adicionar `getProfileOrders`, `getOrderDetail` |
+| `frontend/src/components/seller/SellerOrdersTab.jsx` | Integrar com API real |
+| `frontend/src/pages/SellerOrderDetailPage.jsx` | Integrar com API real |
+
+---
+
+## Testes
+
+### Backend
+- `GET /profile/orders` com token → retorna orders do usuário
+- `GET /profile/orders` sem token → retorna 401
+
+### Frontend
+- `/dashboard?tab=orders` → carrega orders reais
+- Click "View Details" → `/dashboard/order/:id` com dados reais

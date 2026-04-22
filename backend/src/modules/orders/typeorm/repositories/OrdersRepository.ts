@@ -26,7 +26,7 @@ interface IRequest {
 export class OrdersRepository extends Repository<Order> {
   public async findById(id: string): Promise<Order | undefined> {
     const order = await this.findOne(id, {
-      relations: ['order_products', 'buyer', 'shipping_address'],
+      relations: ['order_products', 'order_products.product', 'buyer', 'shipping_address'],
     });
     return order;
   }
@@ -43,5 +43,14 @@ export class OrdersRepository extends Repository<Order> {
     await this.save(order);
 
     return order;
+  }
+
+  public async findAllByCustomerId(customerId: string): Promise<Order[]> {
+    const orders = await this.find({
+      where: { buyer_id: customerId },
+      relations: ['order_products', 'order_products.product', 'buyer', 'shipping_address'],
+      order: { created_at: 'DESC' },
+    });
+    return orders;
   }
 }

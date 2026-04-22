@@ -8,33 +8,25 @@ interface IFindProducts {
 @EntityRepository(Product)
 export class ProductsRepository extends Repository<Product> {
   public async findByName(name: string): Promise<Product | undefined> {
-    const product = this.findOne({
-      where: {
-        name,
-      },
-    });
+    const product = await this.findOne({ where: { name } });
     return product;
   }
+
   public async findById(id: string): Promise<Product | undefined> {
-    const product = this.findOne({ where: { id } });
+    const product = await this.findOne({ where: { id } });
     return product;
   }
+
   public async findAllByIds(products: IFindProducts[]): Promise<Product[]> {
     const productIds = products.map(product => product.id);
-    const existProducts = this.find({
-      where: {
-        id: In(productIds),
-      },
+    const existProducts = await this.find({
+      where: { id: In(productIds) },
     });
-
     return existProducts;
   }
-  public async findAllByCustomerId(
-    customer_id: string,
-  ): Promise<Product[]> {
-    const existProducts = this.find({
-      where: { customer_id },
-    });
+
+  public async findAllByCustomerId(customer_id: string): Promise<Product[]> {
+    const existProducts = await this.find({ where: { customer_id } });
     return existProducts;
   }
 }

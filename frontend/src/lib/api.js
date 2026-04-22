@@ -302,6 +302,20 @@ export async function getOrder(id) {
   return request(`/orders/${id}`);
 }
 
+/**
+ * GET /orders/profile/orders — Get authenticated user's orders.
+ */
+export async function getProfileOrders() {
+  return request('/orders/profile/orders');
+}
+
+/**
+ * GET /orders/:id — Get a single order by ID (alias for getOrder).
+ */
+export async function getOrderDetail(id) {
+  return request(`/orders/${id}`);
+}
+
 // ─── Platform Settings ───────────────────────────────────────────────────────
 
 /**

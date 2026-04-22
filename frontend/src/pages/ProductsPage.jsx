@@ -25,7 +25,7 @@
               const seller = customers.find(c => c.id === p.customer_id?.id || c.id === p.customer_id) || {};
               return {
                 ...p,
-                price: p.price / 100,
+                price: parseFloat(p.price),
                 stock: p.quantity,
                 category: p.categories && p.categories.length > 0 ? p.categories[0] : 'Other',
                 seller: seller.shop_name || seller.name || 'Unknown Seller',

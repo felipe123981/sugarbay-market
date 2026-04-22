@@ -103,7 +103,7 @@ const SellerProductsTab = () => {
             {products.map((product) => (
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>${(product.price / 100).toFixed(2)}</TableCell>
+                <TableCell>${parseFloat(product.price).toFixed(2)}</TableCell>
                 <TableCell>{product.quantity}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Link to={`/dashboard/products/edit/${product.id}`}>

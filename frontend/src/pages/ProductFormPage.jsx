@@ -45,7 +45,7 @@ const ProductFormPage = () => {
         if (data) {
           setProduct({
             name: data.name || '', description: data.description || '',
-            price: (data.price / 100).toString() || '', category: data.category || '',
+            price: parseFloat(data.price).toString() || '', category: data.categories && data.categories.length > 0 ? data.categories[0] : '',
             stock: data.quantity?.toString() || '', weight: data.weight?.toString() || '',
             length: data.length?.toString() || '', width: data.width?.toString() || '',
             height: data.height?.toString() || '', category: data.categories && data.categories.length > 0 ? data.categories[0] : '',
@@ -108,16 +108,15 @@ const ProductFormPage = () => {
     setSaving(true);
 
     if (!product.name || !product.description || !product.price || !product.stock) {
-       toast({ title: "Missing Information", description: "Please fill in name, description, price, and stock.", variant: "destructive" });
-       setSaving(false); return;
+      toast({ title: "Missing Information", description: "Please fill in name, description, price, and stock.", variant: "destructive" });
+      setSaving(false); return;
     }
 
     try {
-      const priceInCents = Math.round(parseFloat(product.price) * 100);
       const payload = {
         name: product.name,
         description: product.description || undefined,
-        price: priceInCents,
+        price: parseFloat(product.price),
         quantity: parseInt(product.stock, 10),
         categories: [product.category],
         weight: product.weight ? parseFloat(product.weight) : undefined,
@@ -195,46 +194,46 @@ const ProductFormPage = () => {
           </CardContent>
         </Card>
 
-         <Card className="glassmorphism mb-6">
-            <CardHeader>
-              <CardTitle>Product Images</CardTitle>
-              <CardDescription>Upload images for your product (max 5 recommended).</CardDescription>
-            </CardHeader>
-            <CardContent>
-               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 mb-4">
-                  {imagePreviews.map((previewUrl, index) => (
-                    <div key={index} className="relative aspect-square border rounded-md overflow-hidden group">
-                       <img src={previewUrl} alt={`Product preview ${index + 1}`} className="w-full h-full object-cover" />
-                       <Button
-                         type="button"
-                         variant="destructive"
-                         size="icon"
-                         className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                         onClick={() => removeImage(index)}
-                       >
-                         <X className="h-4 w-4" />
-                       </Button>
-                    </div>
-                  ))}
-                  {images.length < 6 && (
-                     <Label htmlFor="image-upload" className="aspect-square border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-accent transition-colors">
-                        <Upload className="h-8 w-8 text-muted-foreground mb-1" />
-                        <span className="text-xs text-muted-foreground text-center">Add Image</span>
-                     </Label>
-                  )}
-               </div>
-               <Input
-                 id="image-upload"
-                 type="file"
-                 multiple
-                 accept="image/png, image/jpeg, image/webp"
-                 onChange={handleImageChange}
-                 className="hidden"
-                 disabled={images.length >= 6}
-               />
-               <p className="text-xs text-muted-foreground">Accepted formats: PNG, JPG, WEBP. Max 5MB per image.</p>
-            </CardContent>
-         </Card>
+        <Card className="glassmorphism mb-6">
+          <CardHeader>
+            <CardTitle>Product Images</CardTitle>
+            <CardDescription>Upload images for your product (max 5 recommended).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 mb-4">
+              {imagePreviews.map((previewUrl, index) => (
+                <div key={index} className="relative aspect-square border rounded-md overflow-hidden group">
+                  <img src={previewUrl} alt={`Product preview ${index + 1}`} className="w-full h-full object-cover" />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeImage(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {images.length < 6 && (
+                <Label htmlFor="image-upload" className="aspect-square border-2 border-dashed rounded-md flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-accent transition-colors">
+                  <Upload className="h-8 w-8 text-muted-foreground mb-1" />
+                  <span className="text-xs text-muted-foreground text-center">Add Image</span>
+                </Label>
+              )}
+            </div>
+            <Input
+              id="image-upload"
+              type="file"
+              multiple
+              accept="image/png, image/jpeg, image/webp"
+              onChange={handleImageChange}
+              className="hidden"
+              disabled={images.length >= 6}
+            />
+            <p className="text-xs text-muted-foreground">Accepted formats: PNG, JPG, WEBP. Max 5MB per image.</p>
+          </CardContent>
+        </Card>
 
         <Card className="glassmorphism mt-6">
           <CardHeader>
@@ -242,10 +241,10 @@ const ProductFormPage = () => {
             <CardDescription>Provide package dimensions and weight for accurate shipping cost calculation.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
-             <div><Label htmlFor="weight">Weight (kg)</Label><Input id="weight" name="weight" type="number" min="0.01" step="0.01" value={product.weight} onChange={handleInputChange} required /></div>
-             <div><Label htmlFor="length">Length (cm)</Label><Input id="length" name="length" type="number" min="1" step="0.1" value={product.length} onChange={handleInputChange} required /></div>
-             <div><Label htmlFor="width">Width (cm)</Label><Input id="width" name="width" type="number" min="1" step="0.1" value={product.width} onChange={handleInputChange} required /></div>
-             <div><Label htmlFor="height">Height (cm)</Label><Input id="height" name="height" type="number" min="1" step="0.1" value={product.height} onChange={handleInputChange} required /></div>
+            <div><Label htmlFor="weight">Weight (kg)</Label><Input id="weight" name="weight" type="number" min="0.01" step="0.01" value={product.weight} onChange={handleInputChange} required /></div>
+            <div><Label htmlFor="length">Length (cm)</Label><Input id="length" name="length" type="number" min="1" step="0.1" value={product.length} onChange={handleInputChange} required /></div>
+            <div><Label htmlFor="width">Width (cm)</Label><Input id="width" name="width" type="number" min="1" step="0.1" value={product.width} onChange={handleInputChange} required /></div>
+            <div><Label htmlFor="height">Height (cm)</Label><Input id="height" name="height" type="number" min="1" step="0.1" value={product.height} onChange={handleInputChange} required /></div>
           </CardContent>
           <CardFooter className="justify-end">
             <Button type="submit" disabled={saving}>

@@ -53,7 +53,7 @@ const fetchSellerProducts = async (sellerId) => {
      
      return data.map(p => ({
        ...p,
-       price: p.price / 100,
+       price: parseFloat(p.price),
        stock: p.quantity,
        category: p.categories && p.categories.length > 0 ? p.categories[0] : 'Other',
        sellerId: p.customer_id?.id || p.customer_id,

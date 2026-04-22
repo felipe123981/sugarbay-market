@@ -8,6 +8,11 @@ const ordersController = new OrdersController();
 
 ordersRouter.use(isAuthenticated);
 
+ordersRouter.get('/profile/orders', ordersController.index);
+
+// Rota administrativa — descomentar quando implementar controle de admin
+// ordersRouter.get('/admin', isAuthenticated, ensureAdmin, ordersController.listAll);
+
 ordersRouter.get(
   '/:id',
   celebrate({

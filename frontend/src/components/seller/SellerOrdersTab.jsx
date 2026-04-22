@@ -7,15 +7,16 @@
     import { Badge } from "@/components/ui/badge";
     import { Truck, CheckCircle, XCircle, Clock, Loader2, Eye } from 'lucide-react';
     import { useToast } from "@/components/ui/use-toast";
+    import { getProfileOrders, getCustomer } from '@/lib/api';
 
-    const fetchSellerOrders = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return [
-        { id: 'ORD-001', customer: 'Alice M.', date: '2025-05-01', total: 45.00, status: 'Shipped', items: [{ name: 'Handcrafted Wooden Bowl', quantity: 1 }] },
-        { id: 'ORD-004', customer: 'Bob K.', date: '2025-05-03', total: 55.00, status: 'Processing', items: [{ name: 'Wooden Cutting Board', quantity: 1 }] },
-        { id: 'ORD-005', customer: 'Charlie P.', date: '2025-05-04', total: 30.00, status: 'Delivered', items: [{ name: 'Ceramic Mug Set', quantity: 1 }] },
-        { id: 'ORD-006', customer: 'David L.', date: '2025-05-05', total: 90.00, status: 'Cancelled', items: [{ name: 'Handcrafted Wooden Bowl', quantity: 2 }] },
-      ];
+    const mapStatus = (backendStatus) => {
+      // Backend uses 'Pending'/'Paid', frontend uses 'Processing'/'Shipped'/'Delivered'/'Cancelled'
+      // Map backend status to frontend status
+      switch (backendStatus) {
+        case 'Pending': return 'Processing';
+        case 'Paid': return 'Shipped';
+        default: return backendStatus;
+      }
     };
 
     const getStatusBadgeVariant = (status) => {
@@ -44,15 +45,53 @@
       const { toast } = useToast();
 
       useEffect(() => {
-        setLoadingOrders(true);
-        fetchSellerOrders().then(data => {
-          setOrders(data);
-          setLoadingOrders(false);
-        }).catch(error => {
-          console.error("Failed to fetch seller orders:", error);
-          toast({ title: "Error", description: "Could not load your orders.", variant: "destructive" });
-          setLoadingOrders(false);
-        });
+        const fetchOrdersWithSellers = async () => {
+          setLoadingOrders(true);
+          try {
+            const data = await getProfileOrders();
+
+            // Collect all unique seller IDs
+            const allSellerIds = [...new Set(
+              data.flatMap(order => order.order_products?.map(op => op.seller_id) || [])
+            )];
+
+            // Fetch all seller details in parallel
+            const sellersMap = {};
+            await Promise.all(
+              allSellerIds.map(async (sellerId) => {
+                try {
+                  const customer = await getCustomer(sellerId);
+                  sellersMap[sellerId] = customer?.shop_name || customer?.name || 'Unknown Seller';
+                } catch {
+                  sellersMap[sellerId] = 'Unknown Seller';
+                }
+              })
+            );
+
+            // Transform backend format to frontend format
+            const transformedOrders = data.map(order => ({
+              id: order.id,
+              customer: order.buyer?.name || 'Unknown',
+              date: order.created_at,
+              total: parseFloat(order.total) || 0,
+              status: mapStatus(order.status),
+              items: order.order_products?.map(op => ({
+                name: op.product?.name || 'Product',
+                quantity: op.quantity,
+                sellerId: op.seller_id,
+                sellerName: sellersMap[op.seller_id] || 'Unknown Seller',
+              })) || [],
+            }));
+            setOrders(transformedOrders);
+          } catch (error) {
+            console.error("Failed to fetch seller orders:", error);
+            toast({ title: "Error", description: "Could not load your orders.", variant: "destructive" });
+          } finally {
+            setLoadingOrders(false);
+          }
+        };
+
+        fetchOrdersWithSellers();
       }, [toast]);
 
       if (loadingOrders) {
@@ -81,8 +120,8 @@
               <TableHeader>
                 <TableRow>
                   <TableHead>Order ID</TableHead>
-                  <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Sellers</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
@@ -93,9 +132,26 @@
                 {orders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
                     <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{order.items.map(item => `${item.name} (x${item.quantity})`).join(', ')}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {Array.from(new Set(order.items.map(item => item.sellerId))).map((sellerId, idx) => {
+                          const item = order.items.find(i => i.sellerId === sellerId);
+                          return (
+                            <Link key={sellerId} to={`/seller/${sellerId}`} className="text-primary hover:underline text-sm">
+                              {item?.sellerName || 'Unknown Seller'}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        {order.items.map((item, idx) => (
+                          <span key={idx} className="text-sm">{item.name} (x{item.quantity})</span>
+                        ))}
+                      </div>
+                    </TableCell>
                     <TableCell>${order.total.toFixed(2)}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(order.status)} className="flex items-center">

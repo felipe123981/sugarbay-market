@@ -83,12 +83,12 @@ const ForgotPasswordPage = () => {
     }
 
     if (password.length < 6) {
-        toast({
-            title: 'Password too short',
-            description: 'The password must be at least 6 characters long.',
-            variant: 'destructive',
-        });
-        return;
+      toast({
+        title: 'Password too short',
+        description: 'The password must be at least 6 characters long.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     setIsLoading(true);
@@ -233,7 +233,7 @@ const ForgotPasswordPage = () => {
                   <div className="grid gap-2">
                     <Label htmlFor="token" className="flex justify-between items-center">
                       Recovery Code
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setStep(1)}
                         className="text-[10px] text-primary hover:underline font-normal"

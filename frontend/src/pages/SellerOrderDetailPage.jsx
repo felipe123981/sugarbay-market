@@ -9,44 +9,14 @@
     import { Badge } from "@/components/ui/badge";
     import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
     import { useToast } from "@/components/ui/use-toast";
+    import { getOrderDetail, getCustomer } from '@/lib/api';
 
-    const fetchSellerOrderDetails = async (orderId) => {
-      console.log(`Fetching details for seller order ID: ${orderId}`);
-      await new Promise(resolve => setTimeout(resolve, 700));
-
-      const orders = [
-        { 
-          id: 'ORD-001', 
-          customer: 'Alice M.', 
-          customerEmail: 'alice.m@example.com',
-          shippingAddress: '123 Main St, Anytown, USA 12345',
-          date: '2025-05-01', 
-          total: 45.00, 
-          status: 'Shipped', 
-          items: [
-            { id: 'prod_wood_bowl', name: 'Handcrafted Wooden Bowl', quantity: 1, price: 45.00, sku: 'WB-001' }
-          ],
-          shippingMethod: 'Standard Shipping',
-          trackingNumber: '1Z999AA10123456789',
-          notes: 'Customer requested gift wrapping.'
-        },
-        { 
-          id: 'ORD-004', 
-          customer: 'Bob K.',
-          customerEmail: 'bob.k@example.com',
-          shippingAddress: '456 Oak Ave, Otherville, USA 67890',
-          date: '2025-05-03', 
-          total: 55.00, 
-          status: 'Processing', 
-          items: [
-            { id: 'prod_cut_board', name: 'Wooden Cutting Board', quantity: 1, price: 55.00, sku: 'CB-003' }
-          ],
-          shippingMethod: 'Express Shipping',
-          trackingNumber: null,
-          notes: ''
-        },
-      ];
-      return orders.find(o => o.id === orderId) || { id: orderId, status: 'Not Found' };
+    const mapStatus = (backendStatus) => {
+      switch (backendStatus) {
+        case 'Pending': return 'Processing';
+        case 'Paid': return 'Shipped';
+        default: return backendStatus;
+      }
     };
 
     const statusOptions = ["Processing", "Shipped", "Delivered", "Cancelled"];
@@ -64,11 +34,50 @@
 
       useEffect(() => {
         setLoading(true);
-        fetchSellerOrderDetails(orderId)
-          .then(data => {
-            setOrderDetails(data);
-            setCurrentStatus(data.status);
-            setNewTrackingNumber(data.trackingNumber || '');
+        getOrderDetail(orderId)
+          .then(async data => {
+            // Fetch seller details for each unique seller_id
+            const sellerIds = [...new Set(data.order_products?.map(op => op.seller_id) || [])];
+            const sellersMap = {};
+
+            await Promise.all(
+              sellerIds.map(async (sellerId) => {
+                try {
+                  const customer = await getCustomer(sellerId);
+                  sellersMap[sellerId] = customer?.shop_name || customer?.name || 'Unknown Seller';
+                } catch {
+                  sellersMap[sellerId] = 'Unknown Seller';
+                }
+              })
+            );
+
+            // Transform backend format to frontend format
+            const transformedData = {
+              id: data.id,
+              customer: data.buyer?.name || 'Unknown',
+              customerEmail: data.buyer?.email || '',
+              shippingAddress: data.shipping_address
+                ? `${data.shipping_address.address}, ${data.shipping_address.city}, ${data.shipping_address.state} ${data.shipping_address.zip}, ${data.shipping_address.country}`
+                : '',
+              date: data.created_at,
+              total: parseFloat(data.total) || 0,
+              status: mapStatus(data.status),
+              items: data.order_products?.map(op => ({
+                id: op.product?.id || '',
+                name: op.product?.name || 'Product',
+                quantity: op.quantity,
+                price: parseFloat(op.price) || 0,
+                sku: op.product?.sku || '',
+                sellerId: op.seller_id,
+                sellerName: sellersMap[op.seller_id] || 'Unknown Seller',
+              })) || [],
+              shippingMethod: 'Standard Shipping',
+              trackingNumber: null,
+              notes: '',
+            };
+            setOrderDetails(transformedData);
+            setCurrentStatus(mapStatus(data.status));
+            setNewTrackingNumber('');
             setLoading(false);
           })
           .catch(error => {
@@ -154,14 +163,23 @@
                   </div>
                   <Separator className="my-4" />
                   <h3 className="font-semibold mb-2">Items Ordered:</h3>
-                  <ul className="space-y-1">
+                  <div className="space-y-3">
                     {items.map(item => (
-                      <li key={item.id} className="text-sm flex justify-between">
-                        <span>{item.name} (x{item.quantity}) - SKU: {item.sku}</span>
-                        <span>${(item.price * item.quantity).toFixed(2)}</span>
-                      </li>
+                      <div key={item.id} className="text-sm border rounded-md p-3 bg-background/30">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-muted-foreground">Quantity: {item.quantity}</p>
+                            {item.sku && <p className="text-muted-foreground text-xs">SKU: {item.sku}</p>}
+                            <Link to={`/seller/${item.sellerId}`} className="text-primary hover:underline text-xs">
+                              Sold by: {item.sellerName}
+                            </Link>
+                          </div>
+                          <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                    {notes && (
                     <>
                         <Separator className="my-4" />
