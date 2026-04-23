@@ -42,7 +42,7 @@
           </motion.h1>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-6">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
               {tabsConfig.map(tab => (
                 <TabsTrigger key={tab.value} value={tab.value}>
                   {tab.icon && <tab.icon className="mr-2 h-4 w-4 inline-block"/>}

@@ -2,20 +2,20 @@
     import React, { useEffect } from 'react';
     import { useLocation, useNavigate, Outlet } from 'react-router-dom';
     import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-    import { List, BarChart2, Settings, ShoppingBag, DollarSign } from 'lucide-react';
+    import { List, BarChart2, Settings, DollarSign, FileText } from 'lucide-react';
     import { motion } from 'framer-motion';
 
     import SellerProductsTab from '@/components/seller/tabs/SellerProductsTab';
-    import SellerOrdersTab from '@/components/seller/SellerOrdersTab';
     import SellerAnalyticsTab from '@/components/seller/tabs/SellerAnalyticsTab';
     import SellerSettingsTab from '@/components/seller/tabs/SellerSettingsTab';
     import SellerPayoutsTab from '@/components/seller/tabs/SellerPayoutsTab';
+    import InvoicesSettingsTab from '@/components/settings/InvoicesSettingsTab';
 
     const tabComponents = {
       products: SellerProductsTab,
-      orders: SellerOrdersTab,
       analytics: SellerAnalyticsTab,
       payouts: SellerPayoutsTab,
+      invoices: InvoicesSettingsTab,
       settings: SellerSettingsTab,
     };
 
@@ -58,11 +58,11 @@
           </motion.h1>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6">
               <TabsTrigger value="products"><List className="mr-2 h-4 w-4 inline-block"/> Products</TabsTrigger>
-              <TabsTrigger value="orders"><ShoppingBag className="mr-2 h-4 w-4 inline-block"/> Orders</TabsTrigger>
               <TabsTrigger value="analytics"><BarChart2 className="mr-2 h-4 w-4 inline-block"/> Analytics</TabsTrigger>
               <TabsTrigger value="payouts"><DollarSign className="mr-2 h-4 w-4 inline-block"/> Payouts</TabsTrigger>
+              <TabsTrigger value="invoices"><FileText className="mr-2 h-4 w-4 inline-block"/> Invoices</TabsTrigger>
               <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4 inline-block"/> Settings</TabsTrigger>
             </TabsList>
             

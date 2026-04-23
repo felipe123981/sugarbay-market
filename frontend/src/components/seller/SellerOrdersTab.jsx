@@ -160,7 +160,7 @@
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link to={`/dashboard/order/${order.id}`}>
+                      <Link to={`/settings/order/${order.id}`}>
                         <Button variant="outline" size="sm">
                           <Eye className="mr-2 h-4 w-4" /> View Details
                         </Button>

@@ -21,7 +21,6 @@
     const SellerDashboardPage = React.lazy(() => import('@/pages/SellerDashboardPage'));
     const ProductFormPage = React.lazy(() => import('@/pages/ProductFormPage'));
     const AdminPage = React.lazy(() => import('@/pages/AdminPage'));
-    const InvoicesPage = React.lazy(() => import('@/pages/InvoicesPage'));
     const CheckoutPage = React.lazy(() => import('@/pages/CheckoutPage'));
     const OrderTrackingPage = React.lazy(() => import('@/pages/OrderTrackingPage'));
     const ManagePayoutMethodsPage = React.lazy(() => import('@/pages/ManagePayoutMethodsPage'));
@@ -62,6 +61,7 @@
                 <Route path="/seller/:sellerId" element={<SellerProfilePage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/settings" element={<AccountSettingsPage />} />
+                <Route path="/settings/order/:orderId" element={<SellerOrderDetailPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/favorites" element={<FavoritesPage />} />
                 <Route path="/chat/:chatId" element={<ChatPage />} />
@@ -73,7 +73,6 @@
                 <Route path="/dashboard/billing/manage-payouts" element={<ManagePayoutMethodsPage />} />
                 <Route path="/dashboard/order/:orderId" element={<SellerOrderDetailPage />} /> 
                 <Route path="/admin" element={<AdminPage />} />
-                <Route path="/invoices" element={<InvoicesPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/order/:orderId/track" element={<OrderTrackingPage />} />
                 <Route path="/order/:orderId" element={<OrderTrackingPage />} />

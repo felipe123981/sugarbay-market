@@ -109,7 +109,7 @@
             <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
             <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
             <p className="text-muted-foreground mb-6">Could not find details for order ID: {orderId}.</p>
-            <Button variant="outline" onClick={() => navigate('/dashboard?tab=orders')}>
+            <Button variant="outline" onClick={() => navigate('/settings?tab=orders')}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Orders
             </Button>
           </div>
@@ -122,7 +122,7 @@
             <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
             <h1 className="text-2xl font-bold mb-4">Error Loading Order</h1>
             <p className="text-muted-foreground mb-6">An error occurred while fetching details for {orderId}.</p>
-             <Button variant="outline" onClick={() => navigate('/dashboard?tab=orders')}>
+             <Button variant="outline" onClick={() => navigate('/settings?tab=orders')}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Orders
             </Button>
           </div>
@@ -143,7 +143,7 @@
                 <h1 className="text-3xl font-bold">Order Details: {orderId}</h1>
                 <p className="text-muted-foreground">Manage and view details for this specific order.</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard?tab=orders')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/settings?tab=orders')}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Orders
             </Button>
           </motion.div>

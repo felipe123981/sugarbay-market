@@ -69,15 +69,13 @@ const Header = () => {
   // Removed useEffect for window event listener as context handles updates
 
   const navLinkClass = ({ isActive }) =>
-    `relative text-sm font-medium transition-colors hover:text-primary flex items-center ${
-      isActive ? "text-primary" : "text-muted-foreground"
+    `relative text-sm font-medium transition-colors hover:text-primary flex items-center ${isActive ? "text-primary" : "text-muted-foreground"
     }`;
 
   const mobileNavLinkClass = ({ isActive }) =>
-    `block px-4 py-2 text-base font-medium rounded-md ${
-      isActive
-        ? "bg-primary text-primary-foreground"
-        : "text-foreground hover:bg-accent"
+    `block px-4 py-2 text-base font-medium rounded-md ${isActive
+      ? "bg-primary text-primary-foreground"
+      : "text-foreground hover:bg-accent"
     }`;
 
   return (
@@ -191,7 +189,7 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/invoices" className="flex items-center">
+                  <Link to="/dashboard?tab=invoices" className="flex items-center">
                     <FileText className="mr-2 h-4 w-4" />
                     <span>My Invoices</span>
                   </Link>

@@ -18,7 +18,7 @@ const CheckoutStepConfirmation = ({ order = null }) => {
         <p className="text-muted-foreground mb-6">Thank you for your purchase. Your order has been placed.</p>
       )}
       <div className="flex flex-col sm:flex-row justify-center gap-4">
-        <Link to="/dashboard?tab=orders">
+        <Link to="/settings?tab=orders">
           <Button variant="outline" className="w-full sm:w-auto">View Order History</Button>
         </Link>
         <Link to="/products">
