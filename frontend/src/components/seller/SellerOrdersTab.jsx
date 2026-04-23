@@ -115,61 +115,128 @@
             <CardDescription>View and manage incoming orders.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableCaption>{orders.length === 0 ? 'You have no orders yet.' : 'A list of your recent orders.'}</TableCaption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Sellers</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {Array.from(new Set(order.items.map(item => item.sellerId))).map((sellerId, idx) => {
-                          const item = order.items.find(i => i.sellerId === sellerId);
-                          return (
-                            <Link key={sellerId} to={`/seller/${sellerId}`} className="text-primary hover:underline text-sm">
-                              {item?.sellerName || 'Unknown Seller'}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {order.items.map((item, idx) => (
-                          <span key={idx} className="text-sm">{item.name} (x{item.quantity})</span>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>${order.total.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeVariant(order.status)} className="flex items-center">
-                        {getStatusIcon(order.status)}
-                        <span className="ml-1">{order.status}</span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link to={`/settings/order/${order.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="mr-2 h-4 w-4" /> View Details
-                        </Button>
-                      </Link>
-                    </TableCell>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableCaption>{orders.length === 0 ? 'You have no orders yet.' : 'A list of your recent orders.'}</TableCaption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Sellers</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-medium">{order.id}</TableCell>
+                      <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {Array.from(new Set(order.items.map(item => item.sellerId))).map((sellerId, idx) => {
+                            const item = order.items.find(i => i.sellerId === sellerId);
+                            return (
+                              <Link key={sellerId} to={`/seller/${sellerId}`} className="text-primary hover:underline text-sm">
+                                {item?.sellerName || 'Unknown Seller'}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {order.items.map((item, idx) => (
+                            <span key={idx} className="text-sm">{item.name} (x{item.quantity})</span>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>${order.total.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadgeVariant(order.status)} className="flex items-center">
+                          {getStatusIcon(order.status)}
+                          <span className="ml-1">{order.status}</span>
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link to={`/settings/order/${order.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Eye className="mr-2 h-4 w-4" /> View Details
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {orders.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">You have no orders yet.</p>
+              ) : (
+                orders.map((order) => (
+                  <Card key={order.id} className="border">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Order ID</p>
+                          <p className="font-medium">#{order.id}</p>
+                        </div>
+                        <Badge variant={getStatusBadgeVariant(order.status)} className="flex items-center">
+                          {getStatusIcon(order.status)}
+                          <span className="ml-1">{order.status}</span>
+                        </Badge>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground">Date</p>
+                        <p className="text-sm">{new Date(order.date).toLocaleDateString()}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Sellers</p>
+                        <div className="flex flex-col gap-1">
+                          {Array.from(new Set(order.items.map(item => item.sellerId))).map((sellerId) => {
+                            const item = order.items.find(i => i.sellerId === sellerId);
+                            return (
+                              <Link key={sellerId} to={`/seller/${sellerId}`} className="text-primary hover:underline text-sm">
+                                {item?.sellerName || 'Unknown Seller'}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Items</p>
+                        <div className="flex flex-col gap-1">
+                          {order.items.map((item, idx) => (
+                            <span key={idx} className="text-sm">{item.name} (x{item.quantity})</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total</p>
+                          <p className="text-lg font-bold">${order.total.toFixed(2)}</p>
+                        </div>
+                        <Link to={`/settings/order/${order.id}`}>
+                          <Button variant="outline" size="sm">
+                            <Eye className="mr-2 h-4 w-4" /> View
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
       );

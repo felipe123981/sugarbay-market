@@ -31,22 +31,22 @@
       };
 
       return (
-        <div className="container mx-auto px-4 py-12 flex-grow">
+        <div className="container mx-auto px-4 py-6 sm:py-12 flex-grow">
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-3xl font-bold mb-8"
+            className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8"
           >
             {title}
           </motion.h1>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 mb-6 h-auto">
               {tabsConfig.map(tab => (
-                <TabsTrigger key={tab.value} value={tab.value}>
-                  {tab.icon && <tab.icon className="mr-2 h-4 w-4 inline-block"/>}
-                  {tab.label}
+                <TabsTrigger key={tab.value} value={tab.value} className="text-xs sm:text-sm py-2 px-2">
+                  {tab.icon && <tab.icon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 inline-block"/>}
+                  <span className="truncate">{tab.label}</span>
                 </TabsTrigger>
               ))}
             </TabsList>
