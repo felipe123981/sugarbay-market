@@ -45,5 +45,5 @@ export function getApiBaseUrl(): string {
  * @returns The configured web URL or default localhost
  */
 export function getWebBaseUrl(): string {
-  return process.env.APP_WEB_URL || 'http://localhost:3000';
+  return process.env.APP_WEB_URL || 'http://localhost:80';
 }

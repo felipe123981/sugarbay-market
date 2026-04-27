@@ -1,2 +1,1 @@
-1 - Primeiro, precise que Digira a base de conhecimento em @/home/pyh00ma/Desktop/sugarbay-market/acknowledge_base.md 
-2 - Depois, preciso que mova a tab "localhost/dashboard?tab=orders" e toda a sua lógica, fosse movida de /dashboard para /settings no frontend.
+preciso que analise bem! Estou programando uma fase crítica que requer atenção a segurança da aplicação, o modulo "admins" no backend. No momento, estou programando as rotas e gostaria de saber como resolver a autenticação de admin, visto que o middleware "isAuthenticated" autentica um usuário comum da aplicação. Gostaria que criasse também um middleware "ensureAdmin" para que eu possa usar nas autenticações das rotas de admin.

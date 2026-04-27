@@ -7,6 +7,8 @@ import passwordRouter from '@modules/users/routes/password.routes';
 import profileRouter from '@modules/users/routes/profile.routes';
 import sessionsRouter from '@modules/users/routes/sessions.routes';
 import usersRouter from '@modules/users/routes/users.routes';
+import adminsRouter from '@modules/admins/routes/admins.routes';
+import adminSessionsRouter from '@modules/admins/routes/admin.sessions.routes';
 import { Router } from 'express';
 
 const routes = Router();
@@ -28,6 +30,10 @@ routes.use('/orders', ordersRouter);
 routes.use('/reviews', reviewsRouter);
 
 routes.use('/platform', platformRouter);
+
+routes.use('/admin/sessions', adminSessionsRouter);
+
+routes.use('/admin', adminsRouter);
 
 routes.get('/', (request, response) => {
   return response.json({ message: 'Hello dev!' });
