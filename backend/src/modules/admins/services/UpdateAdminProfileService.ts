@@ -2,36 +2,58 @@ import { getCustomRepository } from 'typeorm';
 import Admin from '../typeorm/entities/Admin';
 import { AdminsRepository } from '../typeorm/repositories/AdminsRepository';
 import AppError from '@shared/errors/AppError';
-import { hash } from 'bcryptjs';
+import { compare, hash } from 'bcryptjs';
 
 interface IRequest {
-  id: string;
+  admin_id: string;
   name: string;
   email: string;
-  password: string;
-  role: string;
+  password?: string;
+  old_password?: string;
+  role?: string;
 }
 
-class UpdateAdminProfileService {
-  public async execute({ id, name, email, password, role }: IRequest): Promise<Admin> {
+class UpdateProfileService {
+  public async execute({
+    admin_id,
+    name,
+    email,
+    password,
+    old_password,
+    role
+  }: IRequest): Promise<Admin> {
     const adminRepository = getCustomRepository(AdminsRepository);
 
-    const admin = await adminRepository.findOne(id);
+    const admin = await adminRepository.findById(admin_id);
 
     if (!admin) {
       throw new AppError('Admin not found.');
     }
 
-    const adminExists = await adminRepository.findByEmail(email);
+    const adminUpdateEmail = await adminRepository.findByEmail(email);
 
-    if (adminExists && email != admin.email) {
-      throw new AppError('There is already one admin with this email.');
+    if (adminUpdateEmail && adminUpdateEmail.id != admin.id) {
+      throw new AppError('There is already one admin with this email.')
+    }
+
+    if (password && !old_password) {
+      throw new AppError('Old password is required.')
+    }
+
+    if (password && old_password) {
+      const checkPassword = await compare(old_password, admin.password);
+
+      if (!checkPassword) {
+        throw new AppError('Old password does not match.');
+      }
+
+      admin.password = await hash(password, 8)
     }
 
     admin.name = name;
     admin.email = email;
-    admin.password = await hash(password, 8);
-    admin.role = role;
+
+    if (role !== undefined) admin.role = role;
 
     await adminRepository.save(admin);
 
@@ -39,4 +61,4 @@ class UpdateAdminProfileService {
   }
 }
 
-export default UpdateAdminProfileService;
+export default UpdateProfileService;

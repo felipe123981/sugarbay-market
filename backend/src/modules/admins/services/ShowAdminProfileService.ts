@@ -14,7 +14,7 @@ class ShowAdminProfileService {
     const admin = await adminRepository.findById(admin_id);
 
     if (!admin) {
-      throw new AppError('Admin not found.');
+      throw new AppError('User not found.');
     }
 
     return admin;

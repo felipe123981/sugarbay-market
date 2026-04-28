@@ -1,0 +1,51 @@
+import AppError from '@shared/errors/AppError';
+import path from 'path';
+import fs from 'fs';
+import { getCustomRepository } from 'typeorm';
+import User from '../typeorm/entities/User';
+import { UsersRepository } from '../typeorm/repositories/UsersRepository';
+import uploadConfig from '@config/upload';
+import { getFileExtension } from '@config/utils';
+
+interface IRequest {
+  user_id: string;
+  avatarFilename: string;
+}
+
+class UpdateUserAvatarService {
+  public async execute({ user_id, avatarFilename }: IRequest): Promise<User> {
+    const usersRepository = getCustomRepository(UsersRepository);
+
+    const user = await usersRepository.findById(user_id);
+
+    if (!user) {
+      throw new AppError('User not found.');
+    }
+
+    if (user.avatar) {
+      const userAvatarFilePath = path.join(uploadConfig.directory, user.avatar);
+      try {
+        await fs.promises.access(userAvatarFilePath, fs.constants.F_OK);
+        // File exists, check extension before deleting
+        if (
+          getFileExtension(avatarFilename) === 'png' ||
+          getFileExtension(avatarFilename) === 'jpg' ||
+          getFileExtension(avatarFilename) === 'jpeg' ||
+          getFileExtension(avatarFilename) === 'webp'
+        ) {
+          await fs.promises.unlink(userAvatarFilePath);
+        }
+      } catch {
+        // File doesn't exist, that's fine - just skip deletion
+      }
+    }
+
+    user.avatar = avatarFilename;
+
+    await usersRepository.save(user);
+
+    return user;
+  }
+}
+
+export default UpdateUserAvatarService;

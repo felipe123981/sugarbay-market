@@ -10,6 +10,8 @@ import usersRouter from '@modules/users/routes/users.routes';
 import adminsRouter from '@modules/admins/routes/admins.routes';
 import adminSessionsRouter from '@modules/admins/routes/admin.sessions.routes';
 import { Router } from 'express';
+import adminPasswordRouter from '@modules/admins/routes/password.routes';
+import adminProfileRouter from '@modules/admins/routes/profile.routes';
 
 const routes = Router();
 
@@ -32,6 +34,10 @@ routes.use('/reviews', reviewsRouter);
 routes.use('/platform', platformRouter);
 
 routes.use('/admin/sessions', adminSessionsRouter);
+
+routes.use('/admin/password', adminPasswordRouter);
+
+routes.use('/admin/profile', adminProfileRouter);
 
 routes.use('/admin', adminsRouter);
 
